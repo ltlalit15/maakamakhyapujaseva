@@ -29,7 +29,7 @@ exports.accessToken = AsyncAwaitError(async (req, res, next) => {
 })
 
 exports.createOrder = AsyncAwaitError(async (req, res, next) => {
-  const { accessToken, amount, userId } = req.body; // ✅ userId from request
+  const { accessToken, amount, userId =1} = req.body; // ✅ userId from request
 
   const payload = {
     merchantOrderId: `txn_${Date.now()}`,
