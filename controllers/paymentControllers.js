@@ -63,7 +63,7 @@ exports.createOrder = AsyncAwaitError(async (req, res, next) => {
       }
     );
     console.log("Payment Response:", response);
-    await Payment.create({ data: response });
+  await Payment.create({ data: response.data }); // ✅ only data
     res.json(response.data);
   } catch (error) {
     console.error("Payment Error:", error.response?.data || error.message);
