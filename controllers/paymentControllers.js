@@ -98,7 +98,7 @@ exports.checkOrderStatus = AsyncAwaitError(async (req, res, next) => {
     const data = response.data;
     console.log("response", response);
     // 📝 Update transaction in DB
-    await Payment.findOneAndUpdate(
+   const data1= await Payment.findOneAndUpdate(
       { merchantOrderId },
       {
         status: data.state,
@@ -108,7 +108,7 @@ exports.checkOrderStatus = AsyncAwaitError(async (req, res, next) => {
         rawResponse: response,
       }
     );
-
+console.log("data1", data1);
     res.json(data);
   } catch (error) {
     console.error("Status Check Error:", error.response?.data || error.message);
