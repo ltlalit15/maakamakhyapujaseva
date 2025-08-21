@@ -60,7 +60,8 @@ exports.createOrder = AsyncAwaitError(async (req, res, next) => {
       }
     );
 
-    console.log("Payment Response:", response.data);
+    console.log("Payment Response Data:", response.data);
+    console.log("Payment Response:", response);
 
     // ✅ Save only if success
     if (response.data.success || response.data.code === "PAYMENT_SUCCESS") {
