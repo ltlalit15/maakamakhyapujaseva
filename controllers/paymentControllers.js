@@ -1,7 +1,9 @@
 const AsyncAwaitError = require('../middleware/AsyncAwaitError');
 const axios = require('axios');
-const CLIENT_ID = "SU2507201201433697692616";
-const CLIENT_SECRET = "667bc467-b57a-48d9-8082-c8ebc0d1b0ad";
+const CLIENT_ID = "TEST-M23UOER70VIZM_25072";
+const CLIENT_SECRET = "YzdhODM5NTMtZGMwYS00YTgyLTlhNTctMTQ4NGJlN2RjNThj";
+// const CLIENT_ID = "SU2507201201433697692616";
+// const CLIENT_SECRET = "667bc467-b57a-48d9-8082-c8ebc0d1b0ad";
 const CLIENT_VERSION = "1";
 const Payment = require('../models/Payment');
 exports.accessToken = AsyncAwaitError(async (req, res, next) => {
