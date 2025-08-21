@@ -65,7 +65,7 @@ exports.createOrder = AsyncAwaitError(async (req, res, next) => {
     // 📝 Save PENDING transaction in DB
     await Payment.create({
       userId,
-      merchantOrderId,
+      merchantOrderId:payload.merchantOrderId,
       amount,
       status: "PENDING",
       rawResponse: response.data,

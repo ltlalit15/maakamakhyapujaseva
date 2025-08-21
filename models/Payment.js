@@ -8,7 +8,7 @@ const paymentSchema = new mongoose.Schema(
       required: true,
     },
 
-    merchantTransactionId: {
+    merchantOrderId: {
       type: String,
       required: true,
       unique: true, // ek transaction ek hi baar ho
