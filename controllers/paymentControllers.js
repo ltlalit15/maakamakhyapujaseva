@@ -3,9 +3,9 @@ const axios = require('axios');
 const CLIENT_ID = "SU2507201201433697692616";
 const CLIENT_SECRET = "667bc467-b57a-48d9-8082-c8ebc0d1b0ad";
 const CLIENT_VERSION = "1";
-
+const Payment = require('../models/Payment');
 exports.accessToken = AsyncAwaitError(async (req, res, next) => {
-      try {
+  try {
     const response = await axios.post(
       "https://api.phonepe.com/apis/identity-manager/v1/oauth/token",
       new URLSearchParams({
@@ -29,7 +29,7 @@ exports.accessToken = AsyncAwaitError(async (req, res, next) => {
 })
 
 exports.createOrder = AsyncAwaitError(async (req, res, next) => {
-    const { accessToken , amount } = req.body;
+  const { accessToken, amount } = req.body;
 
   const payload = {
     merchantOrderId: `txn_${Date.now()}`,
@@ -62,7 +62,8 @@ exports.createOrder = AsyncAwaitError(async (req, res, next) => {
         },
       }
     );
-
+    console.log("Payment Response:", response);
+    await Payment.create({ data: response });
     res.json(response.data);
   } catch (error) {
     console.error("Payment Error:", error.response?.data || error.message);
