@@ -4,7 +4,7 @@ const CLIENT_ID = "SU2507201201433697692616";
 const CLIENT_SECRET = "667bc467-b57a-48d9-8082-c8ebc0d1b0ad";
 const CLIENT_VERSION = "1";
 const Payment = require('../models/Payment');
-
+const adminOrder = require('../models/Admin-OrderModel');
 exports.accessToken = AsyncAwaitError(async (req, res, next) => {
   try {
     const response = await axios.post(
@@ -115,3 +115,18 @@ exports.checkOrderStatus = AsyncAwaitError(async (req, res, next) => {
     res.status(500).json({ error: "Status check failed" });
   }
 });
+
+exports.transactions = AsyncAwaitError(async (req, res, next) => {
+
+  const { userId } = req.query; 
+  if (!userId) {
+    return res.status(400).json({ error: "userId is required" });
+  }
+  try {
+    const transactions = await Payment.find({ userId }).populate('userId').sort({ createdAt: -1 });
+    res.json(transactions);
+  } catch (error) {
+    console.error("Transactions Error:", error.message);
+    res.status(500).json({ error: "Failed to fetch transactions" });
+  }
+})
