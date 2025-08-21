@@ -29,7 +29,7 @@ exports.accessToken = AsyncAwaitError(async (req, res, next) => {
 })
 
 exports.createOrder = AsyncAwaitError(async (req, res, next) => {
-  const { accessToken, amount } = req.body;
+  const { accessToken, amount, userId } = req.body; // ✅ userId from request
 
   const payload = {
     merchantOrderId: `txn_${Date.now()}`,
@@ -38,9 +38,6 @@ exports.createOrder = AsyncAwaitError(async (req, res, next) => {
     metaInfo: {
       udf1: "additional-information-1",
       udf2: "additional-information-2",
-      udf3: "additional-information-3",
-      udf4: "additional-information-4",
-      udf5: "additional-information-5",
     },
     paymentFlow: {
       type: "PG_CHECKOUT",
@@ -62,11 +59,25 @@ exports.createOrder = AsyncAwaitError(async (req, res, next) => {
         },
       }
     );
-    console.log("Payment Response:", response);
-  await Payment.create({ data: response.data }); // ✅ only data
+
+    console.log("Payment Response:", response.data);
+
+    // ✅ Save only if success
+    if (response.data.success || response.data.code === "PAYMENT_SUCCESS") {
+      await Payment.create({
+        userId,
+        merchantOrderId: payload.merchantOrderId,
+        amount,
+        transactionId: response.data.data.transactionId,
+        status: response.data.code,
+        rawResponse: response.data
+      });
+    }
+
     res.json(response.data);
+
   } catch (error) {
     console.error("Payment Error:", error.response?.data || error.message);
     res.status(500).json({ error: "Payment failed" });
   }
-})
+});
