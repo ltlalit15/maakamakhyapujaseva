@@ -49,7 +49,7 @@ exports.createOrder = AsyncAwaitError(async (req, res, next) => {
       },
     },
   };
-
+console.log("merchantOrderId:", payload.merchantOrderId);
   try {
     const response = await axios.post(
       "https://api.phonepe.com/apis/pg/checkout/v2/pay",
