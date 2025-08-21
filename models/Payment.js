@@ -1,17 +1,66 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
-const paymentSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // ✅ User reference
-  merchantOrderId: { type: String, required: true },
-  transactionId: { type: String },
-  amount: { type: Number, required: true },
-  status: { 
-    type: String, 
-    enum: ["PAYMENT_SUCCESS", "PAYMENT_FAILED", "PENDING"],
-    default: "PENDING"
+const paymentSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    merchantTransactionId: {
+      type: String,
+      required: true,
+      unique: true, // ek transaction ek hi baar ho
+    },
+
+    providerReferenceId: {
+      type: String,
+      default: null, // PhonePe / Provider se milega
+    },
+
+    amount: {
+      type: Number,
+      required: true,
+    },
+
+    currency: {
+      type: String,
+      default: "INR",
+    },
+
+    paymentStatus: {
+      type: String,
+      enum: ["PENDING", "SUCCESS", "FAILED"],
+      default: "PENDING",
+    },
+
+    paymentMethod: {
+      type: String,
+      default: null, // e.g., UPI, Wallet, NetBanking
+    },
+
+    orderId: {
+      type: String,
+      default: null, // Agar order se link karna ho
+    },
+
+    responsePayload: {
+      type: Object,
+      default: {},
+    },
+
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+
+    updatedAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
-  rawResponse: { type: Object }, // optional for debugging
-  createdAt: { type: Date, default: Date.now }
-});
+  { timestamps: true }
+);
 
-module.exports = mongoose.model("Payment", paymentSchema);
+export default mongoose.model("Payment", paymentSchema);

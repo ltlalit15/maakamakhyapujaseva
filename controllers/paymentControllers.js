@@ -1,7 +1,5 @@
 const AsyncAwaitError = require('../middleware/AsyncAwaitError');
 const axios = require('axios');
-// const CLIENT_ID = "TEST-M23UOER70VIZM_25072";
-// const CLIENT_SECRET = "YzdhODM5NTMtZGMwYS00YTgyLTlhNTctMTQ4NGJlN2RjNThj";
 const CLIENT_ID = "SU2507201201433697692616";
 const CLIENT_SECRET = "667bc467-b57a-48d9-8082-c8ebc0d1b0ad";
 const CLIENT_VERSION = "1";
@@ -30,11 +28,14 @@ exports.accessToken = AsyncAwaitError(async (req, res, next) => {
   }
 })
 
+// ✅ Create Order
 exports.createOrder = AsyncAwaitError(async (req, res, next) => {
-  const { accessToken, amount, userId =1} = req.body; // ✅ userId from request
+  const { accessToken, amount, userId } = req.body;
+
+  const merchantOrderId = `txn_${Date.now()}`;
 
   const payload = {
-    merchantOrderId: `txn_${Date.now()}`,
+    merchantOrderId,
     amount,
     expireAfter: 1200,
     metaInfo: {
@@ -43,13 +44,12 @@ exports.createOrder = AsyncAwaitError(async (req, res, next) => {
     },
     paymentFlow: {
       type: "PG_CHECKOUT",
-      message: "Payment message used for collect requests",
       merchantUrls: {
         redirectUrl: "https://maakamakhyapujaseva.com",
       },
     },
   };
-console.log("merchantOrderId:", payload.merchantOrderId);
+
   try {
     const response = await axios.post(
       "https://api.phonepe.com/apis/pg/checkout/v2/pay",
@@ -62,25 +62,55 @@ console.log("merchantOrderId:", payload.merchantOrderId);
       }
     );
 
-    console.log("Payment Response Data:", response.data);
-    console.log("Payment Response:", response);
-
-    // ✅ Save only if success
-    if (response.data.success || response.data.code === "PAYMENT_SUCCESS") {
-      await Payment.create({
-        userId,
-        merchantOrderId: payload.merchantOrderId,
-        amount,
-        transactionId: response.data.data.transactionId,
-        status: response.data.code,
-        rawResponse: response.data
-      });
-    }
+    // 📝 Save PENDING transaction in DB
+    await Payment.create({
+      userId,
+      merchantOrderId,
+      amount,
+      status: "PENDING",
+      rawResponse: response.data,
+    });
 
     res.json(response.data);
-
   } catch (error) {
     console.error("Payment Error:", error.response?.data || error.message);
     res.status(500).json({ error: "Payment failed" });
+  }
+});
+
+
+// ✅ Check Order Status
+exports.checkOrderStatus = AsyncAwaitError(async (req, res, next) => {
+  const { accessToken, merchantOrderId } = req.body;
+
+  try {
+    const response = await axios.get(
+      `https://api.phonepe.com/apis/pg/checkout/v2/order/${merchantOrderId}/status`,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `O-Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    const data = response.data;
+
+    // 📝 Update transaction in DB
+    await Payment.findOneAndUpdate(
+      { merchantOrderId },
+      {
+        status: data.state,
+        transactionId: data.paymentDetails?.[0]?.transactionId || null,
+        paymentMode: data.paymentDetails?.[0]?.paymentMode || null,
+        utr: data.paymentDetails?.[0]?.rail?.utr || null,
+        rawResponse: data,
+      }
+    );
+
+    res.json(data);
+  } catch (error) {
+    console.error("Status Check Error:", error.response?.data || error.message);
+    res.status(500).json({ error: "Status check failed" });
   }
 });
