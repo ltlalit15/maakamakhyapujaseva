@@ -98,16 +98,21 @@ exports.checkOrderStatus = AsyncAwaitError(async (req, res, next) => {
     const data = response.data;
     console.log("response", response);
     // 📝 Update transaction in DB
-   const data1= await Payment.findOneAndUpdate(
-      { merchantOrderId },
-      {
-        status: data.state,
-        transactionId: data.paymentDetails?.[0]?.transactionId || null,
-        paymentMode: data.paymentDetails?.[0]?.paymentMode || null,
-        utr: data.paymentDetails?.[0]?.rail?.utr || null,
-        rawResponse: response,
-      }
-    );
+ const data1 = await Payment.findOneAndUpdate(
+  { merchantOrderId },
+  {
+    paymentStatus: response.state,
+    transactionId: data.paymentDetails?.[0]?.transactionId || null,
+    paymentMode: data.paymentDetails?.[0]?.paymentMode || null,
+    utr: data.paymentDetails?.[0]?.rail?.utr || null,
+    rawResponse: JSON.stringify(data),
+  },
+  {
+    new: true,            // ✅ Updated doc return karega
+    runValidators: true,  // ✅ Schema validations run hongi
+  }
+);
+
 console.log("data1", data1);
     res.json(data);
   } catch (error) {
