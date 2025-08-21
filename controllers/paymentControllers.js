@@ -63,13 +63,13 @@ exports.createOrder = AsyncAwaitError(async (req, res, next) => {
     );
 
     // 📝 Save PENDING transaction in DB
- await Payment.create({
-  userId,
-  merchantOrderId: payload.merchantOrderId,
-  amount,
-  paymentStatus: "PENDING",   // ✅ schema ke field name
-  responsePayload: response.data, // ✅ schema ke field name
-});
+    await Payment.create({
+      userId,
+      merchantOrderId: payload.merchantOrderId,
+      amount,
+      paymentStatus: "PENDING",   // ✅ schema ke field name
+      responsePayload: response.data, // ✅ schema ke field name
+    });
 
 
     res.json(response.data);
@@ -96,7 +96,7 @@ exports.checkOrderStatus = AsyncAwaitError(async (req, res, next) => {
     );
 
     const data = response.data;
-
+    console.log("response", response);
     // 📝 Update transaction in DB
     await Payment.findOneAndUpdate(
       { merchantOrderId },
@@ -105,7 +105,7 @@ exports.checkOrderStatus = AsyncAwaitError(async (req, res, next) => {
         transactionId: data.paymentDetails?.[0]?.transactionId || null,
         paymentMode: data.paymentDetails?.[0]?.paymentMode || null,
         utr: data.paymentDetails?.[0]?.rail?.utr || null,
-        rawResponse: data,
+        rawResponse: response,
       }
     );
 
@@ -127,3 +127,20 @@ exports.transactions = AsyncAwaitError(async (req, res, next) => {
     res.status(500).json({ error: "Failed to fetch transactions" });
   }
 })
+
+exports.deleteOrder = AsyncAwaitError(async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    const deletedOrder = await Payment.findByIdAndDelete({ userId: id });
+    await adminOrder.findByIdAndDelete(id); 
+    if (!deletedOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    res.json({ message: "Order deleted successfully", order: deletedOrder });
+  } catch (error) {
+    console.error("Delete Order Error:", error.message);
+    res.status(500).json({ error: "Failed to delete order" });
+  }
+}
+);

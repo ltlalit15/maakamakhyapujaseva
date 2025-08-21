@@ -29,9 +29,25 @@ const OrderSchema = new mongoose.Schema({
         type: String
 
     },
+    name: {
+        type: String
+
+    },
     phoneNumber: {
         type: String
-    }
+    },
+    age: {
+        type: String
+
+    },
+    gotra: {
+        type: String
+
+    },
+    state: {
+        type: String
+    },
+
 
 }, { timestamps: true });
 
