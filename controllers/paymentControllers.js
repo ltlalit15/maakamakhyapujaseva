@@ -4,7 +4,6 @@ const CLIENT_ID = "SU2507201201433697692616";
 const CLIENT_SECRET = "667bc467-b57a-48d9-8082-c8ebc0d1b0ad";
 const CLIENT_VERSION = "1";
 const Payment = require('../models/Payment');
-const adminOrder = require('../models/Admin-OrderModel');
 exports.accessToken = AsyncAwaitError(async (req, res, next) => {
   try {
     const response = await axios.post(
