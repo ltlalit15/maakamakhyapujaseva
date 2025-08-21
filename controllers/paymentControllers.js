@@ -117,12 +117,9 @@ exports.checkOrderStatus = AsyncAwaitError(async (req, res, next) => {
 
 exports.transactions = AsyncAwaitError(async (req, res, next) => {
 
-  const { userId } = req.query; 
-  if (!userId) {
-    return res.status(400).json({ error: "userId is required" });
-  }
+
   try {
-    const transactions = await Payment.find({ userId }).populate('userId').sort({ createdAt: -1 });
+    const transactions = await Payment.find().populate('userId').sort({ createdAt: -1 });
     res.json(transactions);
   } catch (error) {
     console.error("Transactions Error:", error.message);
