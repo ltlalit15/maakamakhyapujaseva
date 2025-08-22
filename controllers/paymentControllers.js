@@ -4,6 +4,7 @@ const CLIENT_ID = "SU2507201201433697692616";
 const CLIENT_SECRET = "667bc467-b57a-48d9-8082-c8ebc0d1b0ad";
 const CLIENT_VERSION = "1";
 const Payment = require('../models/Payment');
+const adminOrder = require('../models/Admin-OrderModel'); // Assuming you have an adminOrder model
 exports.accessToken = AsyncAwaitError(async (req, res, next) => {
   try {
     const response = await axios.post(
@@ -134,18 +135,26 @@ exports.transactions = AsyncAwaitError(async (req, res, next) => {
 })
 
 exports.deleteOrder = AsyncAwaitError(async (req, res, next) => {
-  const { id } = req.params;
+  const { id } = req.params; // yeh OrderId hoga frontend se
 
   try {
-    const deletedOrder = await Payment.findByIdAndDelete({ userId: id });
-    await adminOrder.findByIdAndDelete(id); 
-    if (!deletedOrder) {
+    // agar Payment me relation userId ke through hai
+    const deletedPayment = await Payment.findOneAndDelete({ userId: id });
+
+    // agar Order ko OrderId se delete karna hai
+    const deletedAdminOrder = await adminOrder.findByIdAndDelete(id);
+
+    if (!deletedPayment && !deletedAdminOrder) {
       return res.status(404).json({ error: "Order not found" });
     }
-    res.json({ message: "Order deleted successfully", order: deletedOrder });
+
+    res.json({
+      message: "Order deleted successfully",
+      payment: deletedPayment,
+      order: deletedAdminOrder,
+    });
   } catch (error) {
     console.error("Delete Order Error:", error.message);
     res.status(500).json({ error: "Failed to delete order" });
   }
-}
-);
+});
