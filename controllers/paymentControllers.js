@@ -46,7 +46,7 @@ exports.createOrder = AsyncAwaitError(async (req, res, next) => {
     paymentFlow: {
       type: "PG_CHECKOUT",
       merchantUrls: {
-        redirectUrl: "https://maakamakhyapujaseva.com/thank-you",
+        redirectUrl: `https://maakamakhyapujaseva-production.up.railway.app/api/v1/checkOrderStatus?merchantOrderId=${merchantOrderId}`,
       },
     },
   };
@@ -68,6 +68,7 @@ exports.createOrder = AsyncAwaitError(async (req, res, next) => {
       userId,
       merchantOrderId: payload.merchantOrderId,
       amount,
+      accessToken, // ✅ store karein future ke liye
       paymentStatus: "PENDING",   // ✅ schema ke field name
       responsePayload: response.data, // ✅ schema ke field name
     });
@@ -82,10 +83,21 @@ exports.createOrder = AsyncAwaitError(async (req, res, next) => {
 
 
 // ✅ Check Order Status
+// ✅ Check Order Status & Redirect
 exports.checkOrderStatus = AsyncAwaitError(async (req, res, next) => {
-  const { accessToken, merchantOrderId } = req.body;
+  const { merchantOrderId } = req.query; // redirect ke query me aaega
 
   try {
+    // 📝 Payment record nikal lo DB se
+    const payment = await Payment.findOne({ merchantOrderId });
+    if (!payment) {
+      return res.status(404).send("Payment not found");
+    }
+
+    // ✅ Access token DB se uthao
+    const accessToken = payment.accessToken;
+
+    // ✅ PhonePe se status check karo
     const response = await axios.get(
       `https://api.phonepe.com/apis/pg/checkout/v2/order/${merchantOrderId}/status`,
       {
@@ -96,29 +108,34 @@ exports.checkOrderStatus = AsyncAwaitError(async (req, res, next) => {
       }
     );
 
-    const data = response.data;
-    console.log("response", response);
-    // 📝 Update transaction in DB
- const data1 = await Payment.findOneAndUpdate(
-  { merchantOrderId },
-  {
-    paymentStatus: response.state,
-    transactionId: data.paymentDetails?.[0]?.transactionId || null,
-    paymentMode: data.paymentDetails?.[0]?.paymentMode || null,
-    utr: data.paymentDetails?.[0]?.rail?.utr || null,
-    rawResponse: JSON.stringify(data),
-  },
-  {
-    new: true,            // ✅ Updated doc return karega
-    runValidators: true,  // ✅ Schema validations run hongi
-  }
-);
+    const data = response.data?.data;
+    console.log("📡 PhonePe Status Response:", data);
 
-console.log("data1", data1);
-    res.json(data);
+    // 📝 Update DB
+    const updatedPayment = await Payment.findOneAndUpdate(
+      { merchantOrderId },
+      {
+        paymentStatus: data?.state || "UNKNOWN",
+        transactionId: data?.paymentDetails?.[0]?.transactionId || null,
+        paymentMode: data?.paymentDetails?.[0]?.paymentMode || null,
+        utr: data?.paymentDetails?.[0]?.rail?.utr || null,
+        rawResponse: JSON.stringify(data),
+      },
+      { new: true, runValidators: true }
+    );
+
+    console.log("💾 Updated Payment:", updatedPayment);
+
+    // ✅ Redirect based on status
+    if (data?.state === "COMPLETED") {
+      return res.redirect("https://maakamakhyapujaseva.com/thank-you?status=success");
+    } else {
+      return res.redirect("https://maakamakhyapujaseva.com/payment-failed?status=failed");
+    }
+
   } catch (error) {
-    console.error("Status Check Error:", error.response?.data || error.message);
-    res.status(500).json({ error: "Status check failed" });
+    console.error("❌ Status Check Error:", error.response?.data || error.message);
+    return res.redirect("https://maakamakhyapujaseva.com/payment-failed?status=error");
   }
 });
 
