@@ -46,7 +46,7 @@ exports.createOrder = AsyncAwaitError(async (req, res, next) => {
     paymentFlow: {
       type: "PG_CHECKOUT",
       merchantUrls: {
-        redirectUrl: "https://maakamakhyapujaseva.com",
+        redirectUrl: "https://maakamakhyapujaseva.com/thank-you",
       },
     },
   };

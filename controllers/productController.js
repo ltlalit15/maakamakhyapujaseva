@@ -202,7 +202,7 @@ exports.searchProduct = AsyncAwaitError(async (req, res, next) => {
 
 
 
-// REVIEWS GIVEN BY CUSTOMERS TO PARTICULAR PRODUCT 
+// // REVIEWS GIVEN BY CUSTOMERS TO PARTICULAR PRODUCT 
 exports.createProductReview = AsyncAwaitError(async (req, res, next) => {
   const { rating, comment, productId } = req.body;
   const reviewData = {
